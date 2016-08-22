@@ -1,0 +1,84 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Ninja Van - DJPH",
+		"_postman_id": "234b690e-918a-9f65-5716-2580c600d68a",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01 - Operator Auth",
+			"description": "",
+			"item": [
+				{
+					"name": "Get Operator Auth Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": "tests[\"Response has access_token\"] = responseBody.has(\"accessToken\");\n\ntry\n{\n    var authData = JSON.parse(responseBody);\n    tests[\"Response has not null access_token\"] = typeof authData.accessToken !== 'undefined';\n    postman.setGlobalVariable(\"operator_bearer_token\", authData.accessToken);\n}\ncatch(error)\n{\n    tests[\"Error is empty\"] = (error) ? false : true;\n}\n"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": "postman.clearGlobalVariable(\"operator_bearer_token\");\n"
+							}
+						}
+					],
+					"request": {
+						"url": "{{auth_endpoint}}/auth/login?grant_type=client_credentials",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"{{operator_client_id}}\",\n    \"clientSecret\": \"{{operator_client_secret}}\"\n}\n"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Global Inbound",
+			"description": "",
+			"item": [
+				{
+					"name": "Global Inbound",
+					"request": {
+						"url": "{{api_endpoint}}/2.0/operator/inbounding",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{operator_bearer_token}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"scan\":\"NVSGSHAUN000006025\",\n        \"type\":\"SORTING_HUB\",\n        \"hubId\":1\n    }\n]"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
