@@ -18,7 +18,7 @@
 							"listen": "test",
 							"script": {
 								"type": "text/javascript",
-								"exec": "tests[\"Response has access_token\"] = responseBody.has(\"accessToken\");\n\ntry\n{\n    var authData = JSON.parse(responseBody);\n    tests[\"Response has not null access_token\"] = typeof authData.accessToken !== 'undefined';\n    postman.setGlobalVariable(\"operator_bearer_token\", authData.accessToken);\n}\ncatch(error)\n{\n    tests[\"Error is empty\"] = (error) ? false : true;\n}\n"
+								"exec": "var success = true;\n\ntry\n{\n    tests[\"Response has access_token\"] = responseBody.has(\"accessToken\");\n    var responseData = JSON.parse(responseBody);\n    var accessToken = responseData.accessToken;\n    tests[\"Response has not null access_token\"] = typeof accessToken !== 'undefined';\n    postman.setGlobalVariable(\"operator_bearer_token\", accessToken);\n}\ncatch(error)\n{\n    success = false;\n    console.log(\"Error: \"+JSON.stringify(error));\n}\n\ntests[\"Test successfully done\"] = success;"
 							}
 						},
 						{
@@ -72,7 +72,88 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n    {\n        \"scan\":\"NVSGSHAUN000006025\",\n        \"type\":\"SORTING_HUB\",\n        \"hubId\":1\n    }\n]"
+							"raw": "[\n    {\n        \"scan\": \"NVSGSHAUN000006025\",\n        \"type\": \"SORTING_HUB\",\n        \"hubId\": 1\n    }\n]"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Routing",
+			"description": "",
+			"item": [
+				{
+					"name": "Create Route",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": "var success = true;\n\ntry\n{\n    var responseData = JSON.parse(responseBody);\n    var routeId = responseData[0].id;\n    tests[\"Route is created\"] = typeof routeId !== 'undefined';\n    postman.setGlobalVariable(\"route_id\", routeId);\n}\ncatch(error)\n{\n    success = false;\n    console.log(\"Error: \"+JSON.stringify(error));\n}\nfinally\n{\n    postman.clearGlobalVariable(\"cur_date\");\n    postman.clearGlobalVariable(\"formatted_route_date\");\n}\n\ntests[\"Test successfully done\"] = success;\n"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": "/*\n * To set route for 1 Jan 2016 for Singapore, you must send this date 31 Dec 2015 16:00:00 (UTC+0).\n * Because Singapore timezone is UTC+8, 31 Dec 2015 16:00:00 + 8 hour = 1 Jan 2016 24:00:00.\n */\nvar routeDate = Date.create();\nrouteDate.setDate(routeDate.getDate()-1);\nvar formattedRouteDate = routeDate.format(\"{yyyy}-{MM}-{dd} 16:00:00\");\n\nconsole.log(routeDate.format(\"{yyyy}-{MM}-{dd} 16:00:00\"));\nconsole.log(Date.create());\n\npostman.setGlobalVariable(\"cur_date\", new Date());\npostman.setGlobalVariable(\"formatted_route_date\", formattedRouteDate);"
+							}
+						}
+					],
+					"request": {
+						"url": "{{auth_endpoint}}/2.0/operator/routes/a",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{operator_bearer_token}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"zoneId\": 2,\n        \"hubId\": 1,\n        \"vehicleId\": 1,\n        \"driverId\": 1145,\n        \"date\": \"{{formatted_route_date}}\",\n        \"comments\": \"This route is created for testing purpose only. Ignore this route. Created at {{cur_date}}.\"\n    }\n]"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add Parcel to Route",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": "tests[\"Added to route\"] = responseBody.has(\"Added to route.\");\n"
+							}
+						}
+					],
+					"request": {
+						"url": "{{auth_endpoint}}/2.0/operator/routes/{{route_id}}/addwaypoint",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{operator_bearer_token}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"trackingId\": \"NVSGSHAUN000006024\",\n    \"type\": \"DD\"\n}\n"
 						},
 						"description": ""
 					},
